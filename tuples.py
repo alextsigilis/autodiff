@@ -9,6 +9,7 @@ and symbolic computation contexts.
 from functools import reduce
 from operator import add
 from collections.abc import Iterable
+from typing import Any, Callable
 
 def isscalar(x) -> bool:
     return not isinstance(x, Tuple)
@@ -85,7 +86,7 @@ class Tuple(Iterable):
             return reduce(add, (a * b for a, b in zip(self, other)))
         else:
             T = type(other)
-            return T(*(self * b for b in other))
+            return T(self * b for b in other)
         
     def __rmul__(self, other):
         if isscalar(other):
@@ -97,7 +98,10 @@ class Tuple(Iterable):
             T = type(other)
             return T([other * a for a in self])
         
-    def map(self, func):
+    def __call__(self, *args):
+        return self.recursive_map(lambda f: f(*args))
+        
+    def map(self, func): 
         """
         Apply a function to each element of the Tuple.
 
@@ -129,6 +133,18 @@ class Tuple(Iterable):
             else:
                 return func(item)
         return T([apply_func(item) for item in self.items])
+    
+    def transpose(self):
+        """
+        Transpose a nested Tuple structure.
+
+        Assumes that the Tuple contains other Tuples of the same length.
+
+        Returns:
+            A new Tuple with transposed structure.  
+        """
+        T = opposite_tuple_type(self)
+        return T(self.items)
     
 
 
@@ -245,8 +261,8 @@ class Up(Tuple):
 
     Inherits all functionality from Tuple.
     """
-    def __init__(self, *items):
-        super().__init__(*items)
+    def __init__(self, items):
+        super().__init__(items)
     
     def __repr__(self):
         item_str = ', '.join(repr(item) for item in self.items)
@@ -254,7 +270,16 @@ class Up(Tuple):
     
     def _repr_latex_(self):
         s = latex_up(self)
-        return f"${s}$"   
+        return f"${s}$"
+    
+    def down(self):
+        """
+        Convert this Up tuple to a Down tuple.
+
+        Returns:
+            Down: A Down tuple with the same items.
+        """
+        return Down(self.items)
 
 # # Function constructor
 def up(*args):
@@ -268,8 +293,8 @@ class Down(Tuple):
 
     Inherits all functionality from Tuple.
     """
-    def __init__(self, *items):
-        super().__init__(*items)
+    def __init__(self, items):
+        super().__init__(items)
     
     def __repr__(self):
         item_str = ', '.join(repr(item) for item in self.items)
@@ -278,6 +303,15 @@ class Down(Tuple):
     def _repr_latex_(self):
         s = latex_down(self)
         return f"${s}$"
+    
+    def up(self):
+        """
+        Convert this Down tuple to an Up tuple. 
+        Returns:
+            Up: An Up tuple with the same items.
+        """ 
+        return Up(self.items)
+
     
 # # Function Constructor
 def down(*args):
