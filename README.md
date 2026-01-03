@@ -23,6 +23,14 @@ A Python library for automatic differentiation using dual numbers and custom tup
    pip install sympy
    ```
 
+Recommended: create and activate a virtual environment before installing:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt  # if present
+```
+
 ## Usage
 
 ### Basic Differentiation
@@ -44,6 +52,17 @@ df = D(func)
 print(df(2))  # Computes gradient at x=2
 ```
 
+Quick Dual usage example (forward-mode derivative):
+
+```python
+from dual import Dual
+
+# compute f(x)=x^2 at x=3
+x = Dual(3, 1)    # real=3, dual=1 (d/dx)
+f = x**2
+print(f)          # shows value and derivative: 9 + (6)ε
+```
+
 ### Tuple Operations
 
 ```python
@@ -55,6 +74,16 @@ d = Down(4, 5, 6)
 
 print(u + u)  # Element-wise addition
 print(d * d)  # Contraction if compatible
+```
+
+Registering or extending math primitives (example):
+
+```python
+from mathfunctions import sqrt
+
+@sqrt.register(complex)  # or a custom numeric type
+def _(z):
+   return complex(z.real**0.5, 0)
 ```
 
 ### Higher-Order Derivatives
@@ -72,6 +101,8 @@ print(d2f(func)(2))
 - `derivatives.py`: Differentiation operators and utilities
 - `functions.py`: Additional mathematical functions
 - `examples.ipynb`: Jupyter notebook with usage examples
+
+If you want stricter typing checks, run `mypy .` from the project root.
 
 ## Contributing
 
