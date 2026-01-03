@@ -9,10 +9,11 @@ so that the dual part carries derivative information.
 """
 
 from __future__ import annotations
-import mathfunctions as math
 from typing import Protocol
+from mathfunctions import *
 
 class Scalar(Protocol):
+    """Protocol for a scalar value."""
     def __neg__(self) -> Scalar:
         ...
     def __add__(self, other) -> Scalar:
@@ -46,7 +47,7 @@ class Dual:
         self.dual = dual if dual else 0*real
 
     def __repr__(self) -> str:
-        return f"{self.real} + {self.dual}ε"
+        return f"{self.real} + ({self.dual})ε"
  
     def __add__(self, other: Scalar) -> Dual:
         y = other if isinstance(other, Dual) else Dual(other)
@@ -89,12 +90,66 @@ class Dual:
     
     def __neg__(self) -> Dual:
         return Dual(-self.real, -self.dual)
- 
     
-@math.sin.register(Dual)
-def _(x: Dual) -> Dual:
-    return Dual(math.sin(x.real), math.cos(x.real) * x.dual)
+#
+# Function Implementations
+# ------------------------
 
-@math.cos.register(Dual)
-def _(x: Dual) -> Dual:
-    return Dual(math.cos(x.real), -math.sin(x.real) * x.dual)
+@sqrt.register(Dual)
+def _(x):
+    return Dual(sqrt(x.real), 
+                x.dual / (2 * sqrt(x.real)))
+
+# Trig implementations
+
+@sin.register(Dual)
+def _(x):
+    return Dual(sin(x.real), cos(x.real) * x.dual)
+
+@cos.register(Dual)
+def _(x):
+    return Dual(cos(x.real), -sin(x.real) * x.dual)
+
+@tan.register(Dual)
+def _(x):
+    return Dual(tan(x.real), 
+                (1 / cos(x.real) * (1 / cos(x.real) * x.dual)))
+
+# Inverse trig implementations
+
+@asin.register(Dual)
+def _(x):
+    return Dual(asin(x.real), x.dual / (sqrt(1 - x.real ** 2)))
+
+
+@acos.register(Dual)
+def _(x):
+    return Dual(acos(x.real), -x.dual / (sqrt(1 - x.real ** 2)))
+
+
+@atan.register(Dual)
+def _(x):
+    return Dual(atan(x.real), x.dual / (1 + x.real ** 2))
+
+# Exponential / logarithm implementations
+
+@exp.register(Dual)
+def _(x):
+    val = exp(x.real)
+    return Dual(val, val * x.dual)
+
+
+@log.register(Dual)
+def _(x):
+    return Dual(log(x.real), x.dual / x.real)
+
+
+@log10.register(Dual)
+def _(x):
+    return Dual(log10(x.real), x.dual / (x.real * log(10)))
+
+
+@log2.register(Dual)
+def _(x):
+    return Dual(log2(x.real), x.dual / (x.real * log(2)))
+
