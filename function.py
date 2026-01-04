@@ -25,7 +25,7 @@ def as_function(obj):
 
     if isinstance(obj, Function):
         return obj
-    return Function(lambda x: obj)
+    return Function(lambda *xs: obj)
 
 class Function:
     """
@@ -43,10 +43,10 @@ class Function:
             raise TypeError("Function requires a callable")
         self._impl = impl
 
-    def __call__(self, x):
+    def __call__(self, *xs):
         """Evaluate the wrapped function at `x`."""
 
-        return self._impl(x)
+        return self._impl(*xs)
 
     # ---------- algebra ----------
 
